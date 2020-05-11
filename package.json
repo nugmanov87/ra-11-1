@@ -1,7 +1,7 @@
 {
   "name": "ra-11-1",
   "version": "0.1.0",
-  "homepage": "https://nugmanov87.github.io/ra-11-1/services",
+  "homepage": "https://nugmanov87.github.io/ra-11-1/",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.1.0",
