@@ -1,95 +1,168 @@
 import {
   CHANGE_SERVICE_FIELD,
+  CHANGE_ADD_SERVICE_FIELD,
+  CHANGE_SERVICE_CANCEL,
   FETCH_SERVICES_REQUEST,
   FETCH_SERVICES_FAILURE,
   FETCH_SERVICES_SUCCESS,
-  ADD_SERVICE_REQUEST,
-  ADD_SERVICE_FAILURE,
-  ADD_SERVICE_SUCCESS,
-  REMOVE_SERVICE,
-} from './actionTypes';
+  FETCH_SERVICES_END_LOADING,
+  IS_LOADING_REQUEST,
+  IS_LOADING_FAILURE,
+  ADD_SERVICES_REQUEST,
+  ADD_SERVICES_FAILURE,
+  ADD_SERVICES_SUCCESS,
+  CHANGE_SERVICES_REQUEST,
+  CHANGE_SERVICES_FAILURE,
+  CHANGE_SERVICES_SUCCESS,
+  CHANGE_SERVICES_INIT,
+  IS_LOADING_SUCCESS,
+} from "./actionTypes";
 
-export const fetchServicesRequest = () => ({
-  type: FETCH_SERVICES_REQUEST,
-});
+export function changeAddServiceField(nameField, value) {
+  return { type: CHANGE_ADD_SERVICE_FIELD, payload: { nameField, value } };
+}
 
-export const fetchServicesFailure = error => ({
-  type: FETCH_SERVICES_FAILURE,
-  payload: {
-    error,
-  },
-});
+export function changeServiceField(nameField, value) {
+  return { type: CHANGE_SERVICE_FIELD, payload: { nameField, value } };
+}
 
-export const fetchServicesSuccess = items => ({
-  type: FETCH_SERVICES_SUCCESS,
-  payload: {
-    items,
-  },
-});
+export function changeServiceCancel() {
+  return { type: CHANGE_SERVICE_CANCEL };
+}
 
-export const addServiceRequest = (name, price) => ({
-  type: ADD_SERVICE_REQUEST,
-  payload: {
-    name,
-    price,
-  },
-})
+export function fetchServiceRequest() {
+  return { type: FETCH_SERVICES_REQUEST };
+}
 
-export const addServiceFailure = error => ({
-  type: ADD_SERVICE_FAILURE,
-  payload: {
-    error,
-  },
-});
+export function fetchServiceFailure(error) {
+  return { type: FETCH_SERVICES_FAILURE, payload: { error } };
+}
 
-export const addServiceSuccess = () => ({
-  type: ADD_SERVICE_SUCCESS,
-});
+export function fetchServiceSuccess(items) {
+  return { type: FETCH_SERVICES_SUCCESS, payload: items };
+}
 
-export const changeServiceField = (name, value) => ({
-  type: CHANGE_SERVICE_FIELD,
-  payload: {
-    name,
-    value,
-  },
-});
+export function addServiceRequest() {
+  return { type: ADD_SERVICES_REQUEST };
+}
 
-export const removeService = id => ({
-  type: REMOVE_SERVICE,
-  payload: {
-    id,
-  },
-});
+export function addServiceFailure(error) {
+  return { type: ADD_SERVICES_FAILURE, payload: { error } };
+}
 
-export const fetchServices = async dispatch => {
-  dispatch(fetchServicesRequest());
+export function addServiceSuccess() {
+  return { type: ADD_SERVICES_SUCCESS };
+}
+
+export function changeServiceRequest() {
+  return { type: CHANGE_SERVICES_REQUEST };
+}
+
+export function changeServiceFailure(error) {
+  return { type: CHANGE_SERVICES_FAILURE, payload: { error } };
+}
+
+export function changeServiceSuccess() {
+  return { type: CHANGE_SERVICES_SUCCESS };
+}
+
+export function changeServiceInit(data) {
+  return { type: CHANGE_SERVICES_INIT, payload: data };
+}
+
+export function fetchServiceEndLoading() {
+  return { type: FETCH_SERVICES_END_LOADING };
+}
+
+export function isLoadingRequest() {
+  return { type: IS_LOADING_REQUEST };
+}
+
+export function isLoadingFailure(error) {
+  return { type: IS_LOADING_FAILURE, payload: { error } };
+}
+export function isLoadingSuccess() {
+  return { type: IS_LOADING_SUCCESS };
+}
+
+export const fetchService = async (dispatch, id = null) => {
+  dispatch(fetchServiceRequest());
+  const url = id
+    ? `${process.env.REACT_APP_LOCAL_URL}/${id}`
+    : process.env.REACT_APP_LOCAL_URL;
   try {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}`)
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(response.statusText);
     }
     const data = await response.json();
-    console.log(data);
-    dispatch(fetchServicesSuccess(data));
+    if (id) {
+      dispatch(changeServiceInit(data));
+    } else {
+      dispatch(fetchServiceSuccess({ data }));
+    }
   } catch (e) {
-    dispatch(fetchServicesFailure(e.message));
+    dispatch(fetchServiceFailure({ error: e.message }));
   }
-}
+};
 
 export const addService = async (dispatch, name, price) => {
   dispatch(addServiceRequest());
   try {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    await fetch(process.env.REACT_APP_LOCAL_URL, {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
       body: JSON.stringify({ name, price }),
-    })
-    if (!response.ok) {
-      throw new Error(response.statusText);
+    });
+    // eslint-disable-next-line no-undef
+    if (id) {
+      dispatch(changeServiceSuccess());
+    } else {
+      dispatch(addServiceSuccess());
+      fetchService(dispatch);
     }
-    dispatch(addServiceSuccess());
   } catch (e) {
     dispatch(addServiceFailure(e.message));
   }
-  fetchServices(dispatch);
-}
+};
+
+export const changeService = async (
+  dispatch,
+  id,
+  name,
+  price,
+  content,
+  goBack
+) => {
+  dispatch(changeServiceRequest());
+  try {
+    // eslint-disable-next-line no-unused-vars
+    const resp = await fetch(process.env.REACT_APP_LOCAL_URL, {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({ id, name, price, content }),
+    });
+    dispatch(changeServiceSuccess());
+  } catch (e) {
+    console.log(e);
+    dispatch(changeServiceFailure({ error: e.message }));
+  }
+};
+
+export const removeService = async (dispatch, id) => {
+  dispatch(isLoadingRequest());
+  try {
+    await fetch(`${process.env.REACT_APP_LOCAL_URL}/${id}`, {
+      method: "DELETE",
+    });
+  } catch (e) {
+    dispatch(isLoadingFailure(e.message));
+  } finally {
+    dispatch(isLoadingSuccess());
+    fetchService(dispatch);
+  }
+};

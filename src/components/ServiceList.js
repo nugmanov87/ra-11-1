@@ -1,37 +1,69 @@
-import React, { useEffect } from 'react'
-import {useSelector, useDispatch} from 'react-redux';
-import { removeService, fetchServices } from '../actions/actionCreators';
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { removeService, fetchService } from "../actions/actionCreators";
+import ServiceAdd from "./ServiceAdd";
+import { EditFilled, DeleteFilled } from "@ant-design/icons";
 
 function ServiceList(props) {
-  const {items, loading, error} = useSelector(state => state.serviceList);
+  const { match, history } = props;
+  const { items, loading, error } = useSelector((state) => state.serviceList);
+  // eslint-disable-next-line no-unused-vars
+  const { isLoading, isError } = useSelector((state) => state.serviceIsLoadng);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    fetchServices(dispatch);
-  }, [dispatch])
+    fetchService(dispatch);
+  }, [dispatch]);
 
-  const handleRemove = id => {
-    dispatch(removeService(id));
-  }
+  const handleRemove = (id) => {
+    removeService(dispatch, id);
+  };
+
+  const handleChange = (id) => {
+    history.push(`${match.url}/${id}`);
+  };
+
+  const handleRefresh = () => {
+    fetchService(dispatch);
+  };
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <div className="ui active slow green double loader"></div>;
   }
 
   if (error) {
-    return <p>Something went wrong try again</p>;
+    return (
+      <>
+        <div className="error-msg">Произошла ошибка!</div>
+        <button class="ui red basic button" onClick={handleRefresh}>
+          Refresh
+        </button>
+      </>
+    );
   }
 
   return (
-    <ul>
-      {items.map(o => (
-        <li key={o.id}>
-          {o.name} {o.price}
-          <button onClick={() => handleRemove(o.id)}>✕</button>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ServiceAdd />
+      <ul>
+        {items &&
+          items.map((o) => (
+            <li key={o.id}>
+              {o.name} {o.price}
+              <EditFilled
+                className="button btn"
+                onClick={() => handleChange(o.id)}
+              />
+              <DeleteFilled
+                className="button"
+                onClick={() => handleRemove(o.id)}
+                disabled={isLoading}
+              />
+            </li>
+          ))}
+      </ul>
+    </>
   );
 }
 
-export default ServiceList
+export default ServiceList;
